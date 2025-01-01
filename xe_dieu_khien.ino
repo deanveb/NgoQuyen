@@ -1,41 +1,57 @@
-/*
-   Gamepad module provides three different mode namely Digital, JoyStick and Accerleometer.
-
-   You can reduce the size of library compiled by enabling only those modules that you want to
-   use. For this first define CUSTOM_SETTINGS followed by defining INCLUDE_modulename.
-
-   Explore more on: https://thestempedia.com/docs/dabble/game-pad-module/
-*/
 #define CUSTOM_SETTINGS
 #define INCLUDE_GAMEPAD_MODULE
 #include <Dabble.h>
+
+
+enum control {
+  Left,
+  Right,
+  Up,
+  Down,
+};
+
+// Số lượng pin cần sử dụng
+const int n = 6;
+
+// Mảng ở dưới là số thứ tự pin nối các chân in1,in2,... với thứ tự như sau:
+// in1, in2, in3, in4, enA(cần pin có dấu ngã), enB(cần pin có dấu ngã)
+const int pins[n] = {7, 6, 5, 4, 3, 9};
+/* 
+Nếu bị chỉnh lộn thì đổi cái mảng 2 chiều với tên các cột như sau:
+in1, in2, in3, in4, enA, enB
+*/
+const int truthTable[][n] = {
+  {LOW, HIGH, HIGH, LOW, 0, 255}, // Left
+  {HIGH, LOW, LOW, HIGH, 255, 0}, // Right
+  {HIGH, LOW, HIGH, LOW, 255, 255}, //Up
+  {LOW, HIGH, LOW, HIGH, 255, 255} // Down
+};
+
 void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(9600);      // make sure your Serial Monitor is also set at this baud rate.
-  Dabble.begin(9600, 0, 1);      //Enter baudrate of your bluetooth.Connect bluetooth on Bluetooth port present on evive.
+  Serial.begin(9600);
+  Dabble.begin(9600, 0, 1);
 }
 
 void loop() {
-  Dabble.processInput();             //this function is used to refresh data obtained from smartphone.Hence calling this function is mandatory in order to get data properly from your mobile.
-  Serial.print("KeyPressed: ");
+  Dabble.processInput();
   if (GamePad.isUpPressed())
   {
-    Serial.print("UP");
+    move(Up);
   }
 
   if (GamePad.isDownPressed())
   {
-    Serial.print("DOWN");
+    move(Down);
   }
 
   if (GamePad.isLeftPressed())
   {
-    Serial.print("Left");
+    move(Left);
   }
 
   if (GamePad.isRightPressed())
   {
-    Serial.print("Right");
+    move(Right);
   }
 
   if (GamePad.isSquarePressed())
@@ -67,22 +83,15 @@ void loop() {
   {
     Serial.print("Select");
   }
-  Serial.print('\t');
+}
 
-  int a = GamePad.getAngle();
-  Serial.print("Angle: ");
-  Serial.print(a);
-  Serial.print('\t');
-  int b = GamePad.getRadius();
-  Serial.print("Radius: ");
-  Serial.print(b);
-  Serial.print('\t');
-  float c = GamePad.getXaxisData();
-  Serial.print("x_axis: ");
-  Serial.print(c);
-  Serial.print('\t');
-  float d = GamePad.getYaxisData();
-  Serial.print("y_axis: ");
-  Serial.println(d);
-  Serial.println();
+void move(int action) {
+  for (int i = 0; i < n; i++) {
+    if (truthTable[action][i] == HIGH || truthTable[action][i] == LOW) {
+      digitalWrite(pins[i], truthTable[action][i]);
+    }
+    else {
+      analogWrite(pins[i], truthTable[action][i]);
+    }
+  }
 }
